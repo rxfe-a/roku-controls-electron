@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Roku Remote Control</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .scan-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .scan-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
+        }
+
+        .scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(238, 90, 36, 0.6);
+        }
+
+        .scan-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .devices-list {
+            margin-bottom: 30px;
+        }
+
+        .device-item {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .device-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .device-item.selected {
+            border-color: #00d4aa;
+            background: rgba(0, 212, 170, 0.2);
+        }
+
+        .device-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .device-ip {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .remote-controls {
+            text-align: center;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, #00d4aa, #00a085);
+            border: none;
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.6);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toggle-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(45deg, #fd79a8, #e84393);
+            box-shadow: 0 4px 15px rgba(232, 67, 147, 0.4);
+        }
+
+        .toggle-btn:hover {
+            box-shadow: 0 6px 20px rgba(232, 67, 147, 0.6);
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            opacity: 0.7;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Roku Remote</h1>
+        
+        <div class="scan-section">
+            <button id="scanBtn" class="scan-btn">Scan for Roku Devices</button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div id="devicesList" class="devices-list"></div>
+
+        <div class="remote-controls">
+            <h3>Remote Control</h3>
+            <div class="controls-grid">
+                <button id="toggleBtn" class="control-btn toggle-btn" disabled>
+                     Power Toggle
+                </button>
+                <button id="leftBtn" class="control-btn" disabled>
+                     Left
+                </button>
+                <div></div>
+                <button id="rightBtn" class="control-btn" disabled>
+                     Right
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedDevice = null;
+
+        const scanBtn = document.getElementById('scanBtn');
+        const devicesList = document.getElementById('devicesList');
+        const status = document.getElementById('status');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+
+        function showStatus(message, type = 'loading') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function hideStatus() {
+            status.style.display = 'none';
+        }
+
+        function updateControlsState() {
+            const disabled = !selectedDevice;
+            toggleBtn.disabled = disabled;
+            leftBtn.disabled = disabled;
+            rightBtn.disabled = disabled;
+        }
+
+        async function scanForRokus() {
+            scanBtn.disabled = true;
+            scanBtn.textContent = 'Scanning...';
+            devicesList.innerHTML = '';
+            selectedDevice = null;
+            updateControlsState();
+            
+            showStatus('Scanning for Roku devices...', 'loading');
+
+            try {
+                const devices = await window.electronAPI.scanRokus();
+                
+                if (devices.length === 0) {
+                    showStatus('No Roku devices found on the network', 'error');
+                    devicesList.innerHTML = '<p style="text-align: center; opacity: 0.7;">No devices found. Make sure your Roku is connected to the same network.</p>';
+                } else {
+                    hideStatus();
+                    
+                    // Get detailed info for each device
+                    for (const device of devices) {
+                        const info = await window.electronAPI.getRokuInfo(device.ip);
+                        if (info.success) {
+                            device.name = info.name;
+                            device.model = info.model;
+                            device.version = info.version;
+                        }
+                    }
+                    
+                    displayDevices(devices);
+                }
+            } catch (error) {
+                showStatus(`Error scanning: ${error.message}`, 'error');
+            }
+
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'Scan for Roku Devices';
+        }
+
+        function displayDevices(devices) {
+            devicesList.innerHTML = '';
+            
+            devices.forEach(device => {
+                const deviceElement = document.createElement('div');
+                deviceElement.className = 'device-item';
+                deviceElement.innerHTML = `
+                    <div class="device-name">${device.name}</div>
+                    <div class="device-ip">${device.ip}:${device.port}${device.model ? ` • ${device.model}` : ''}</div>
+                `;
+                
+                deviceElement.addEventListener('click', () => {
+                    // Remove selection from other devices
+                    document.querySelectorAll('.device-item').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    
+                    // Select this device
+                    deviceElement.classList.add('selected');
+                    selectedDevice = device;
+                    updateControlsState();
+                    
+                    showStatus(`Connected to ${device.name}`, 'success');
+                    setTimeout(hideStatus, 2000);
+                });
+                
+                devicesList.appendChild(deviceElement);
+            });
+        }
+
+        async function sendCommand(command) {
+            if (!selectedDevice) return;
+            
+            try {
+                const result = await window.electronAPI.sendRokuCommand(selectedDevice.ip, command);
+                if (!result.success) {
+                    showStatus(`Command failed: ${result.error}`, 'error');
+                    setTimeout(hideStatus, 3000);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                setTimeout(hideStatus, 3000);
+            }
+        }
+
+        // Event listeners
+        scanBtn.addEventListener('click', scanForRokus);
+        toggleBtn.addEventListener('click', () => sendCommand('PowerOn'));
+        leftBtn.addEventListener('click', () => sendCommand('Left'));
+        rightBtn.addEventListener('click', () => sendCommand('Right'));
+
+        // Initial scan on load
+        scanForRokus();
+    </script>
+</body>
+</html>

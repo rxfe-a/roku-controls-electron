@@ -1,0 +1,28 @@
+{
+  "name": "roku-remote-electron",
+  "version": "1.0.0",
+  "description": "Simple Roku Remote Control Electron App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "start:windows": "electron .",
+    "start:macos": "electron .",
+    "start:linux-x11": "GDK_BACKEND=x11 electron .",
+    "start:linux-wayland": "electron . --enable-features=UseOzonePlatform --ozone-platform=wayland --disable-gpu-sandbox",
+    "dev": "electron . --dev",
+    "dev:windows": "electron . --dev",
+    "dev:macos": "electron . --dev", 
+    "dev:linux-x11": "GDK_BACKEND=x11 electron . --dev",
+    "dev:linux-wayland": "electron . --dev --enable-features=UseOzonePlatform --ozone-platform=wayland --disable-gpu-sandbox",
+    "install-deps": "npm install"
+  },
+  "devDependencies": {
+    "electron": "^25.9.8"
+  },
+  "dependencies": {
+    "roku-client": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
